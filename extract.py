@@ -14,7 +14,7 @@ class Extract:
 
     def __init__(self):
         self.factor_data = kmd.KoreanMarketFactorData() 
-        self.dart = OpenDartReader('5051107fbc4d82b760065923b66190b4af37c17a') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
+        self.dart = OpenDartReader('**********************') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
         self.report_code = [
             '11013',  # "1분기보고서":
             '11012',  # "반기보고서":
