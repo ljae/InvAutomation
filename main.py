@@ -13,7 +13,7 @@ kospi_kosdaq_data = extractor.get_data()
 
 print("--------------")
 extracted_data = extractor.extract_finance_data(
-    [y,y-1,y-2],
+    [y-1],
     filter_by_condition.filtering_data_that_market_cap_under_thirty_percent(
         kospi_kosdaq_data
     ))

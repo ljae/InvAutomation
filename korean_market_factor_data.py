@@ -47,11 +47,12 @@ class KoreanMarketFactorData:
         :return weekdays
         :return:
         """
-        today = (datetime.datetime.today()- datetime.timedelta(days=1)).strftime("%Y%m%d")
+        #today = (datetime.datetime.today()- datetime.timedelta(days=1)).strftime("%Y%m%d")
+        today = (datetime.datetime.today()).strftime("%Y%m%d")
         print(today)
         year = str(datetime.datetime.today().strftime("%Y"))
         month = str(datetime.datetime.today().strftime("%m"))
-        date = int(datetime.datetime.today().day)-1
+        date = int(datetime.datetime.today().day)
 
         date_formated = datetime.datetime.strptime(today, "%Y%m%d")  # datetime format 으로 변환
 

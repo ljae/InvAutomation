@@ -3,7 +3,7 @@ import pandas as pd
 def drop_column(df: pd.DataFrame):
     # 스팩 주식 드랍
     df.drop(
-        df[df["종목명"].str.contains("스팩")].index,
+        df[df["종목명"].str.contains("스팩","투자증권")].index,
         inplace=True
     )
     df.drop(
@@ -12,7 +12,7 @@ def drop_column(df: pd.DataFrame):
     )
     # 우선주 드랍
     df.drop(
-        df[df["종목명"].str.endswith(("우", "우B", "우C"))].index,
+        df[df["종목명"].str.endswith(("우", "우B", "우C","우(전환)"))].index,
         inplace=True
     )
 
@@ -37,7 +37,7 @@ def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
     """
     data = drop_column(data)
     data = data.sort_values(by=["종목코드"], ascending=True)
-    return data[data["시가총액"] <= data["시가총액"].quantile(q=0.03)]
+    return data[data["시가총액"] <= data["시가총액"].quantile(q=0.2)]
 
 def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
     """

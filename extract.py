@@ -1,3 +1,4 @@
+from turtle import right
 import korean_market_factor_data as kmd
 import pandas as pd
 import time
@@ -7,12 +8,13 @@ from korean_market_factor_data import KoreanMarketFactorData
 import OpenDartReader
 import pandas as pd
 import krx_condition
+from pykrx import stock
 
 class Extract:
 
     def __init__(self):
         self.factor_data = kmd.KoreanMarketFactorData() 
-        self.dart = OpenDartReader('***************') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
+        self.dart = OpenDartReader('5051107fbc4d82b760065923b66190b4af37c17a') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
         self.report_code = [
             '11013',  # "1분기보고서":
             '11012',  # "반기보고서":
@@ -43,27 +45,31 @@ class Extract:
         :param date_day:
         :return:
         """
-        date = date_year + date_month + str(date_day)
-        date_formated = datetime.strptime(date, "%Y%m%d")  # datetime format 으로 변환
+        date = str(date_year) + str(date_month) + str(date_day)
+        #date_formated = datetime.strptime(date, "%Y%m%d")  # datetime format 으로 변환
 
-        if date_formated.weekday() == 5:
-            if date_month == '12':
-                date_day -= 2  # 연말의 경우 2일을 뺀다.
-            else:
-                date_day -= 1  # 토요일일 경우 1일을 뺀다.
-        elif date_formated.weekday() == 6:
-            if date_month == '12':
-                date_day -= 3  # 연말의 경우 3일을 뺀다.
-            else:
-                date_day -= 2  # 일요일일 경우 2일을 뺀다.
-        elif date_formated.weekday() == 4 and date_month == '12':
-            date_day -= 1  # 연말인데 금요일이면 1일을 뺀다.
+        #if date_formated.weekday() == 5:
+            #if date_month == '12':
+                #date_day -= 2  # 연말의 경우 2일을 뺀다.
+            #else:
+                #date_day -= 1  # 토요일일 경우 1일을 뺀다.
+        #elif date_formated.weekday() == 6:
+            #if date_month == '12':
+                #date_day -= 3  # 연말의 경우 3일을 뺀다.
+            #else:
+                #date_day -= 2  # 일요일일 경우 2일을 뺀다.
+        #elif date_formated.weekday() == 4 and date_month == '12':
+            #date_day -= 1  # 연말인데 금요일이면 1일을 뺀다.
 
-        # 추석에 대한 처리
-        if date_month == '09' and date_year == '2020':
-            date_day -= 1
-        elif date_month == '09' and date_year == '2023':
-            date_day -= 3
+        ## 추석에 대한 처리
+        #if date_month == '09' and date_year == '2020':
+            #date_day -= 1
+        #elif date_month == '09' and date_year == '2023':
+            #date_day -= 3
+        
+        date_day = stock.get_nearest_business_day_in_a_week(date=date)
+
+        #print(date_day)
 
         return date_day
 
@@ -92,9 +98,12 @@ class Extract:
         for j, report_name in enumerate(self.report_code):
             # 연결 재무제표 불러오기
             report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
+            #report = self.dart.finstate(stock_code, year, report_name)
 
             if report is None:  # 리포트가 없다면
+                report = self.dart.finstate_all(stock_code, year, report_name, fs_div='OFS')
                 #print("no report")
+            if report is None:
                 pass
 
             else:
@@ -120,12 +129,12 @@ class Extract:
 
                 #if stock_code == '011810':  # 매출총이익 항목이 없는 회사도 있다. 이 경우, 매출액 - 매출원가로 계산.
                     #grossProfit[j] = revenue[j] - self.__check_index_error(report,
-                                                                           #krx_condition.get_condition11(report))
+                                                                        #krx_condition.get_condition11(report))
                 #elif stock_code in no_report_list:  # 매출총이익도 없고 이를 계산할 매출원가도 없다.
                     #grossProfit[j] = 1
                 #elif stock_code == '008770':
                     #grossProfit[j] = revenue[j] - self.__check_index_error(report,
-                                                                           #krx_condition.get_condition14(report))
+                                                                        #krx_condition.get_condition14(report))
                 #else:
                 grossProfit[j] = self.__check_index_error(report, condition5)
 
@@ -177,24 +186,34 @@ class Extract:
 
                 fcf[j] = (cfo[j] - capex[j])
 
-                 # 날짜 계산
-                date_day = self.__check_weekend(date_year, date_month, date_day)
-                date = date_year + date_month + str(date_day).zfill(2)
-                date_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
+                # 날짜 계산
+                #date_day = self.__check_weekend(date_year, date_month, date_day)
+                #print((str(year)+str(date_month)+str(date_day)))
 
-                #각 분기별 마지막 영업일의 시가총액
-                market_cap_df = self.factor_data.stock.get_market_cap_by_date(date, date, stock_code)
+                if (datetime.strptime(str(year)+str(date_month)+str(date_day),'%Y%m%d') < datetime.today()):
+                    date_day = stock.get_nearest_business_day_in_a_week((str(year)+str(date_month)+str(date_day)))
+                    date_day = date_day[:4] + date_day[4:6] + date_day[-2:].zfill(2)
+                    #date = date_year + date_month + str(date_day).zfill(2)
+                    #date_string = date_year + '-' + date_month + '-' + str(date_day).zfill(2)
+                    date_string = date_day[:4] + '-' + date_day[4:6] + '-' + date_day[-2:].zfill(2)
+                    #print(date_day)
+                    #print(date_string)
+
+                    #각 분기별 마지막 영업일의 시가총액
+                    market_cap_df = self.factor_data.stock.get_market_cap_by_date(date_day, date_day, stock_code)
                 
-                try:
-                    market_cap[j] = market_cap_df.loc[date_string]["시가총액"]
-                except KeyError:
-                    print(market_cap_df)
-                    market_cap[j] = 0
+                    try:
+                        market_cap[j] = market_cap_df.loc[date_string]["시가총액"]
+                    except KeyError:
+                        print(market_cap_df)
+                        market_cap[j] = 0
 
-                record = [stock_code, date_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
-                    total_assets[j],revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],fcf[j]]
+                    record = [stock_code, date_string, market_cap[j], current_assets[j], liabilities[j], equity[j],
+                        total_assets[j],revenue[j], grossProfit[j], income[j], net_income[j], cfo[j],fcf[j]]
 
-                data.append(record)
+                    data.append(record)
+                else :
+                    pass
 
         return data
     
@@ -207,10 +226,14 @@ class Extract:
         """
         try:
         	#에러가 없으면 각 재무정보 데이터에서 당기금액 부분을 추출
+            #print(report.loc[condition].iloc[0]['thstrm_amount'].replace(',', ''))
+            #return int(report.loc[condition].iloc[0]['thstrm_amount'].replace(",", ""))
             return int(report.loc[condition].iloc[0]['thstrm_amount'])
         except IndexError:
+            #print("index error")
             return -1
         except ValueError:
+            #print("value error")
             return -1
         
     def get_data(self):
@@ -241,7 +264,7 @@ class Extract:
                 data += dt
 
             #각 종목별 호출속도를 조절하기 위한 sleep
-            time.sleep(0.3)
+            time.sleep(0.1)
 		
         # 각 종목별 데이터가 들어있는 2차원 배열의 데이터프레임화
         # extract.py의 클래스의 클래스변수 로 설정했던 
