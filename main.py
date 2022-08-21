@@ -13,7 +13,7 @@ kospi_kosdaq_data = extractor.get_data()
 
 print("--------------")
 extracted_data = extractor.extract_finance_data(
-    [y-1],
+    [y, y-1],
     filter_by_condition.filtering_data_that_market_cap_under_thirty_percent(
         kospi_kosdaq_data
     ))
@@ -29,7 +29,7 @@ exporter.export_to_excel_with_many_sheets(
         filter_by_condition.filtering_high_div("고배당률_리스트", kospi_kosdaq_data.copy()),
         filter_by_condition.filtering_high_propensity_to_dividend("소형주 고배당성향", extracted_data.copy()),
         filter_by_condition.filtering_low_pfcr("소형주_저PFCR_시총잉여현금흐름", extracted_data.copy()),
-        filter_by_condition.filtering_low_pbr_and_high_gpa("소형주_저PBR_고GPA", 0.8, extracted_data.copy()),
+        #filter_by_condition.filtering_low_pbr_and_high_gpa("소형주_저PBR_고GPA", 0.8, extracted_data.copy()),
         filter_by_condition.filtering_high_ncav_cap_and_gpa("소형주_고NCAV_GPA_저부채비율", extracted_data.copy()),
         filter_by_condition.filtering_profit_momentum("소형주_모멘텀_전분기대비_영업이익순이익_전략", extracted_data.copy()),
         filter_by_condition.filtering_value_and_profit_momentum("소형주_밸류모멘텀_전략", extracted_data.copy()),

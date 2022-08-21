@@ -1,9 +1,22 @@
 import pandas as pd
+import requests
+import datetime
+import yaml
+
+with open('/Users/jaelee/invest_code/quantpython/config.yaml', encoding='UTF-8') as f:
+    _cfg = yaml.load(f, Loader=yaml.FullLoader)
+DISCORD_WEBHOOK_URL = _cfg['DISCORD_WEBHOOK_URL']
+
+def send_message(msg):
+    """디스코드 메세지 전송"""
+    now = datetime.datetime.now()
+    message = {"content": f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] {str(msg)}"}
+    requests.post(DISCORD_WEBHOOK_URL, data=message)
 
 def drop_column(df: pd.DataFrame):
     # 스팩 주식 드랍
     df.drop(
-        df[df["종목명"].str.contains("스팩","투자증권")].index,
+        df[df["종목명"].str.contains("스팩")].index,
         inplace=True
     )
     df.drop(
@@ -12,7 +25,7 @@ def drop_column(df: pd.DataFrame):
     )
     # 우선주 드랍
     df.drop(
-        df[df["종목명"].str.endswith(("우", "우B", "우C","우(전환)"))].index,
+        df[df["종목명"].str.endswith(("우", "우B", "우C","우(전환)","투자증권","캐피탈","IB","인베스트먼트"))].index,
         inplace=True
     )
 
@@ -36,8 +49,8 @@ def filtering_data_that_market_cap_under_thirty_percent(data: pd.DataFrame):
     :return: DataFrame
     """
     data = drop_column(data)
-    data = data.sort_values(by=["종목코드"], ascending=True)
-    return data[data["시가총액"] <= data["시가총액"].quantile(q=0.2)]
+    data = data.sort_values(by=["시가총액"], ascending=True)
+    return data.iloc[:int(len(data) * 0.3)]
 
 def filtering_low_per(sheet_name, df_copied: pd.DataFrame):
     """
@@ -116,14 +129,12 @@ def filtering_high_propensity_to_dividend(sheet_name, df: pd.DataFrame):
             df2.sort_values(by=["DIV"], ascending=False).reset_index(drop=True)
             )
 
-def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
-    """
+"""def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
     Profitable value. 저 PBR 고 GPA
     최근분기 데이터로 계산
     :param pbr:
     :param df:
     :return:
-    """
     gpa_condition = (df['GP/A'] > 0)
 
     df.drop(
@@ -141,7 +152,7 @@ def filtering_low_pbr_and_high_gpa(sheet_name, pbr: float, df: pd.DataFrame):
     return (sheet_name,
             df2.sort_values(by=['연도', 'PBR and GP/A score'], ascending=[False, True]).reset_index(
                 drop=True)
-            )
+            )"""
 
 
 def filtering_high_ncav_cap_and_gpa(sheet_name, df: pd.DataFrame):
@@ -211,9 +222,15 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
     :param df:
     :return:
     """
+    df = df.sort_values(by=['연도'], ascending=[False])
+    df = df.drop_duplicates(['종목코드'], keep = 'first')
 
     df.drop(
         df[df["PER_quarterly"] <= 0].index,
+        inplace=True
+    )
+    df.drop(
+        df[df["PFCR"] <= 0].index,
         inplace=True
     )
 
@@ -223,9 +240,16 @@ def filtering_value_factor_upgrade(sheet_name, df: pd.DataFrame):
     df["PSR rank"] = df["PSR"].rank(ascending=True)
 
     df["4 Total Value score"] = df["PBR rank"] + df["PER rank"] + df["PFCR rank"] + df["PSR rank"]
+    
+    df = df.sort_values(by=['4 Total Value score'], ascending=[True])
+
+    print(df.iloc[:20,1])
+
+    send_message(df.iloc[:25,1])
+
 
     return (sheet_name,
-            df.sort_values(by=['연도', '4 Total Value score'], ascending=[False, True]).reset_index(
+            df.sort_values(by=['4 Total Value score'], ascending=[True]).reset_index(
                 drop=True)
             )
 

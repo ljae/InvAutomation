@@ -14,7 +14,7 @@ class Extract:
 
     def __init__(self):
         self.factor_data = kmd.KoreanMarketFactorData() 
-        self.dart = OpenDartReader('**********************') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
+        self.dart = OpenDartReader('5051107fbc4d82b760065923b66190b4af37c17a') # OpenDart API KEYapi_key)  # config/api_key.py에서 api key의 설정이 필요함.
         self.report_code = [
             '11013',  # "1분기보고서":
             '11012',  # "반기보고서":
@@ -96,14 +96,23 @@ class Extract:
         record = []
        
         for j, report_name in enumerate(self.report_code):
+
+            if(year == 2022 and (report_name in ('11011', '11014'))):
+                #print("no year")
+                pass
+
             # 연결 재무제표 불러오기
             report = self.dart.finstate_all(stock_code, year, report_name, fs_div='CFS')
             #report = self.dart.finstate(stock_code, year, report_name)
 
             if report is None:  # 리포트가 없다면
                 report = self.dart.finstate_all(stock_code, year, report_name, fs_div='OFS')
-                #print("no report")
+
             if report is None:
+                print(stock_code)
+                print(year)
+                print(report_name)
+                #print("no report")
                 pass
 
             else:
@@ -257,14 +266,14 @@ class Extract:
         for row in df.itertuples():
         
         	#터미널 상의 추출상황 로깅을 위한 프린트문 현재갯수/전체종목갯수, 종목명
-            print(f"extracting {count}/{len(df)} {row[2]}...")
+            #print(f"extracting {count}/{len(df)} {row[2]}...")
             count += 1
             for year in finance_years:
                 dt = self.__find_financial_indicator(row[1], year)
                 data += dt
 
             #각 종목별 호출속도를 조절하기 위한 sleep
-            time.sleep(0.1)
+            #time.sleep(0.2)
 		
         # 각 종목별 데이터가 들어있는 2차원 배열의 데이터프레임화
         # extract.py의 클래스의 클래스변수 로 설정했던 

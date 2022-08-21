@@ -49,7 +49,7 @@ class KoreanMarketFactorData:
         """
         #today = (datetime.datetime.today()- datetime.timedelta(days=1)).strftime("%Y%m%d")
         today = (datetime.datetime.today()).strftime("%Y%m%d")
-        print(today)
+        #print(today)
         year = str(datetime.datetime.today().strftime("%Y"))
         month = str(datetime.datetime.today().strftime("%m"))
         date = int(datetime.datetime.today().day)
